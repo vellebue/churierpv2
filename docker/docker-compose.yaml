@@ -1,0 +1,21 @@
+version: '3'
+services:
+  churierpv2-db:
+    image: postgres:17.5
+    volumes:
+      - churierpv2-db-volume:/var/lib/postgresql/data
+    ports:
+      - 7969:5432
+    expose:
+      - "5432"
+    environment:
+      POSTGRES_DB: "churierpv2"
+      POSTGRES_USER: "churierp"
+      POSTGRES_PASSWORD: "angel7"
+    networks:
+      - churierpv2-net
+volumes:
+  churierpv2-db-volume:
+networks:
+  churierpv2-net:
+    driver: bridge

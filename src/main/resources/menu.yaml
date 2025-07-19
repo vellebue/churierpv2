@@ -1,0 +1,18 @@
+menuList:
+  - id: "administration"
+    textKey: "menu.administration"
+    children:
+      - id: "administration.users"
+        textKey: "menu.administration.users"
+        viewClass: "org.bastanchu.churierpv2.view.administration.users.UsersView"
+
+      - id: "administration.societies"
+        textKey: "menu.administration.societies"
+        viewClass: "org.bastanchu.churierpv2.view.administration.societies.SocietiesView"
+
+  - id: "invoices"
+    textKey: "menu.invoices"
+    children:
+      - id: "invoices.receivingInvoices"
+        textKey: "menu.invoices.receivingInvoices"
+        viewClass: "org.bastanchu.churierpv2.view.invoices.receivinginvoices.ReceivingInvoicesView"
