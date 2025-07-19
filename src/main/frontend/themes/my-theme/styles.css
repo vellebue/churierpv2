@@ -91,3 +91,9 @@ vaadin-text-field.bordered::part(input-field) {
   word-wrap: break-word;
   white-space: normal;
 }
+
+.grid-button-bar {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}

@@ -14,12 +14,10 @@ abstract class BaseFilterView<F, L> (val messages: MessageSource,
                                      val applicationContext: ApplicationContext,
                                      val parent: BaseCRUDView<F,L>) : VerticalLayout(), Autowirable {
 
-    var  filterDtoClass: Class<F>
-    var  listItemDtoClass: Class<L>
+    val  filterDtoClass: Class<F> = (this::class.java.genericSuperclass as ParameterizedType).actualTypeArguments[0] as Class<F>
+    val  listItemDtoClass: Class<L> = (this::class.java.genericSuperclass as ParameterizedType).actualTypeArguments[1] as Class<L>
 
     init {
-        filterDtoClass = (this::class.java.genericSuperclass as ParameterizedType).actualTypeArguments[0] as Class<F>
-        listItemDtoClass = (this::class.java.genericSuperclass as ParameterizedType).actualTypeArguments[1] as Class<L>
         autowireComponents(applicationContext)
         val mainView = VerticalLayout()
         val formModel = filterDtoClass.getDeclaredConstructor().newInstance()
