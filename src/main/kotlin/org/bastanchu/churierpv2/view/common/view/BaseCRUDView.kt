@@ -55,5 +55,6 @@ abstract class BaseCRUDView<F, L>(messages: MessageSource, applicationContext: A
     override fun itemSelected(event: GridEvent<L>) {
         logger.debug("Event selected: ${event.item!!::class.java.simpleName}")
         addAndReplace(detailedView)
+        detailedView.establishFormModel(event.item!!)
     }
 }

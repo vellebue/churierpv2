@@ -1,5 +1,6 @@
 package org.bastanchu.churierpv2.view.common
 
+import com.vaadin.flow.component.AbstractField
 import com.vaadin.flow.component.Component
 import com.vaadin.flow.component.formlayout.FormLayout
 import com.vaadin.flow.component.html.NativeLabel
@@ -14,7 +15,7 @@ import org.springframework.context.i18n.LocaleContextHolder
 import java.util.TreeSet
 import java.util.stream.Collectors
 
-class Form<T>(val titleKey : String, val formModel : T, val messages : MessageSource) : VerticalLayout() {
+class Form<T>(val titleKey : String, var formModel : T, val messages : MessageSource) : VerticalLayout() {
 
     init {
         buildfForm()
@@ -31,17 +32,36 @@ class Form<T>(val titleKey : String, val formModel : T, val messages : MessageSo
             val currentComponent = modelMap?.get(it)?.component
             val currentField = formModelClass.declaredFields.filter { it.name ==  fieldName }[0]
             var currentValue: Any? = null
-            // TODO Consider all component types
+            // TO DO Consider all component types
+            /*
             if (currentComponent is TextField) {
                 currentValue = currentComponent.value
             } else if (currentComponent is IntegerField) {
                 currentValue = currentComponent.value
             }
-            // TODO END
+            */
+            currentValue = currentComponent?.value
+            // TO DO END
             currentField.trySetAccessible()
             currentField.set(formModelInstance, currentValue)
         }
         return formModelInstance
+    }
+
+    fun establishFormModel(formModel: T) {
+        this.formModel = formModel
+        val formModelClass = formModel!!::class.java
+        val fields = formModelClass.declaredFields
+        fields.forEach { field ->
+            val fieldName = field.name
+            val fieldStructure = modelMap?.get(fieldName)
+            if (fieldStructure != null) {
+                val fieldComponent = fieldStructure.component!!
+                field.trySetAccessible()
+                val value = field.get(formModel)
+                fieldComponent.setValue(value)
+            }
+        }
     }
 
     private fun buildfForm() {
@@ -98,14 +118,14 @@ class Form<T>(val titleKey : String, val formModel : T, val messages : MessageSo
                         val formFieldAnnotation = field.getDeclaredAnnotation(FormField::class.java)
                         field.trySetAccessible()
                         val fieldValue = field.get(formModel)
-                        var component: Component? = null
+                        var component: AbstractField<*,in Any?>? = null
                         if (fieldAnnotation != null) {
                             // TODO More type cases
                             if (field.type.isAssignableFrom(String::class.java)) {
-                                component = buildTextField(fieldAnnotation, fieldValue?.toString(), messages)
+                                component = buildTextField(fieldAnnotation, fieldValue?.toString(), messages) as AbstractField<*,in Any?>?
                             }
                             else if (field.type.isAssignableFrom(Integer::class.java)) {
-                                component = buildIntegerField(fieldAnnotation, fieldValue as Int?, messages)
+                                component = buildIntegerField(fieldAnnotation, fieldValue as Int?, messages) as AbstractField<*,in Any?>?
                             }
                             // TODO end more type cases
                             if (component != null) {
@@ -170,7 +190,7 @@ class Form<T>(val titleKey : String, val formModel : T, val messages : MessageSo
 
     }
 
-    data class FieldStructure(val component: Component)
+    data class FieldStructure(val component: AbstractField<*,in Any?>)
 
     data class FormStructure(val formLayout: FormLayout,
                              val modelMap: Map<String, FieldStructure>)
