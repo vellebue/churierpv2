@@ -92,6 +92,19 @@ vaadin-text-field.bordered::part(input-field) {
   white-space: normal;
 }
 
+.grid-page-bar {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  background-color: #eeeeee;
+}
+
+.grid-page-bar-slash-label {
+  font-size: 16pt;
+  display: flex;
+  align-items: center;
+}
+
 .grid-button-bar {
   width: 100%;
   display: flex;

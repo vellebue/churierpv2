@@ -7,4 +7,8 @@ import org.springframework.context.MessageSource
 
 class SocietiesListView(messages : MessageSource, applicationContext: ApplicationContext, parent: SocietiesView) :
     BaseListView<SocietyDto>(messages, applicationContext, parent) {
+
+    override fun getDefaultPageSize(): Int {
+        return 6
+    }
 }

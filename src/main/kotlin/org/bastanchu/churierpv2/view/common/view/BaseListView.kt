@@ -9,7 +9,7 @@ import org.springframework.context.MessageSource
 import org.springframework.context.i18n.LocaleContextHolder
 import java.lang.reflect.ParameterizedType
 
-open class BaseListView<L>(val messages: MessageSource,
+abstract class BaseListView<L>(val messages: MessageSource,
                            val applicationContext: ApplicationContext,
                            val parent: BaseCRUDView<*, L>): VerticalLayout(), Autowirable {
 
@@ -21,7 +21,7 @@ open class BaseListView<L>(val messages: MessageSource,
         autowireComponents(applicationContext)
         val mainView = VerticalLayout()
         val listModel = ArrayList<L>()
-        val grid = Grid("societies.listView.title", listModel, listItemDtoClass, messages)
+        val grid = Grid("societies.listView.title", listModel, listItemDtoClass, messages, getDefaultPageSize())
         this.grid = grid
         grid.addGridListener(parent)
         mainView.add(grid)
@@ -44,4 +44,6 @@ open class BaseListView<L>(val messages: MessageSource,
         buttonBar.add(backButton)
         return buttonBar
     }
+
+    abstract fun getDefaultPageSize(): Int
 }
