@@ -12,22 +12,24 @@ import org.bastanchu.churierpv2.view.common.annotations.Field
 import org.bastanchu.churierpv2.view.common.annotations.ListField
 import org.bastanchu.churierpv2.view.common.event.GridEvent
 import org.bastanchu.churierpv2.view.common.listener.GridListener
-import org.springframework.beans.support.PagedListHolder.DEFAULT_PAGE_SIZE
 import org.springframework.context.MessageSource
 import org.springframework.context.i18n.LocaleContextHolder
-import oshi.driver.unix.solaris.kstat.SystemPages
 import java.util.stream.Collectors
+import kotlin.Comparator
 import kotlin.jvm.Throws
+import kotlin.jvm.javaClass
 
 
-class Grid<T>(val titleKey: String, gridModel: List<T>, val modelClass: Class<T>, val messages: MessageSource, var pageSize:Int = DEFAULT_PAGE_SIZE) : VerticalLayout() {
+class Grid<T>(val titleKey: String, gridModel: MutableList<T>, val modelClass: Class<T>, val messages: MessageSource, var pageSize:Int = DEFAULT_PAGE_SIZE) : VerticalLayout() {
 
     lateinit var grid: com.vaadin.flow.component.grid.Grid<T>
     val gridListeners = mutableListOf<GridListener<T>>()
-    val DEFAULT_PAGE_SIZE = 5
     lateinit var pageListHandler: PageListHandler<T>
-    var currentPage: Int = 1
-    var numPages: Int = 1
+    lateinit var pageBar: PageBar<T>
+
+    companion object {
+        val DEFAULT_PAGE_SIZE = 5
+    }
 
     init  {
         buildGrid(gridModel)
@@ -47,18 +49,20 @@ class Grid<T>(val titleKey: String, gridModel: List<T>, val modelClass: Class<T>
         buildGrid(gridModel)
     }
 
-    private fun buildGrid(gridModel: List<T>) {
+    private fun buildGrid(gridModel: MutableList<T>) {
         clearGrid()
         val titleContainer = HorizontalLayout()
         titleContainer.addClassName("grid-title")
         titleContainer.add(NativeLabel(messages.getMessage(titleKey, null, LocaleContextHolder.getLocale())))
         add(titleContainer)
         pageListHandler = PageListHandler(gridModel, pageSize)
-        currentPage = 1
-        numPages = pageListHandler.getNumPages()
-        val initialList = pageListHandler.getPageAt(currentPage - 1) as MutableList<T>
-        val gridLayout = GridFactory.buildGrid(initialList, modelClass, messages)
+        pageBar = buildPageBar(pageListHandler)
+        //currentPage = 1
+        //numPages = pageListHandler.getNumPages()
+        val initialList = pageListHandler.getPageAt(pageBar.currentPage - 1) as MutableList<T>
+        val gridLayout = GridFactory.buildGrid(initialList, modelClass, messages, pageListHandler, pageBar)
         grid = gridLayout
+        pageBar.enableGrid(grid)
         val thisGrid = this
         grid.addItemDoubleClickListener { event ->
             val item = event.item
@@ -68,66 +72,12 @@ class Grid<T>(val titleKey: String, gridModel: List<T>, val modelClass: Class<T>
         val gridContainer = VerticalLayout()
         gridContainer.addClassName("grid-container")
         gridContainer.add(grid)
-        val pageBar = buildPageBar()
         gridContainer.add(pageBar)
         add(gridContainer)
     }
 
-    private fun buildPageBar(): Component {
-        val pageBar = HorizontalLayout()
-        pageBar.addClassName("grid-page-bar")
-        val buttonDoubleLeft = Button("", Icon(VaadinIcon.ANGLE_DOUBLE_LEFT))
-        pageBar.add(buttonDoubleLeft)
-        val buttonLeft = Button("", Icon(VaadinIcon.ANGLE_LEFT))
-        pageBar.add(buttonLeft)
-        val currentPageField = IntegerField("")
-        currentPageField.value = currentPage
-        currentPageField.width = "25pt"
-        currentPageField.isReadOnly = true
-        pageBar.add(currentPageField)
-        val slashLabel = NativeLabel("/")
-        slashLabel.addClassName("grid-page-bar-slash-label")
-        pageBar.add(slashLabel)
-        val numPagesField = IntegerField("")
-        numPagesField.value = numPages
-        numPagesField.width = "25pt"
-        numPagesField.isReadOnly = true
-        pageBar.add(numPagesField)
-        val buttonRight = Button("", Icon(VaadinIcon.ANGLE_RIGHT))
-        pageBar.add(buttonRight)
-        val buttonDoubleRight = Button("", Icon(VaadinIcon.ANGLE_DOUBLE_RIGHT))
-        pageBar.add(buttonDoubleRight)
-        // Event handling
-        buttonLeft.addClickListener { event ->
-            var currentPage = currentPageField.value
-            if (currentPage > 1) {
-                currentPage--
-                val pageList = pageListHandler.getPageAt(currentPage - 1)
-                grid.setItems(pageList)
-                currentPageField.value = currentPage
-            }
-        }
-        buttonDoubleLeft.addClickListener { event ->
-            val pageList = pageListHandler.getPageAt(0)
-            grid.setItems(pageList)
-            currentPageField.value = 1
-        }
-        buttonRight.addClickListener { event ->
-            var numPages = numPagesField.value
-            var currentPage = currentPageField.value
-            if (currentPage < numPages) {
-                currentPage++
-                val pageList = pageListHandler.getPageAt(currentPage - 1)
-                grid.setItems(pageList)
-                currentPageField.value = currentPage
-            }
-        }
-        buttonDoubleRight.addClickListener { event ->
-            var currentPage = numPagesField.value
-            val pageList = pageListHandler.getPageAt(currentPage - 1)
-            grid.setItems(pageList)
-            currentPageField.value = currentPage
-        }
+    private fun buildPageBar(pageListHandler: PageListHandler<T>): PageBar<T> {
+        val pageBar = PageBar(pageListHandler)
         return pageBar
     }
 
@@ -144,21 +94,98 @@ class Grid<T>(val titleKey: String, gridModel: List<T>, val modelClass: Class<T>
         }
     }
 
+    class PageBar<T>(val pageListHandler: PageListHandler<T>): HorizontalLayout() {
+
+        var currentPage: Int = 1
+        var numPages: Int = pageListHandler.getNumPages()
+        val buttonDoubleLeft = Button("", Icon(VaadinIcon.ANGLE_DOUBLE_LEFT))
+        val buttonLeft = Button("", Icon(VaadinIcon.ANGLE_LEFT))
+        val currentPageField = IntegerField("")
+        val numPagesField = IntegerField("")
+        val buttonRight = Button("", Icon(VaadinIcon.ANGLE_RIGHT))
+        val buttonDoubleRight = Button("", Icon(VaadinIcon.ANGLE_DOUBLE_RIGHT))
+
+        init {
+            addClassName("grid-page-bar")
+            add(buttonDoubleLeft)
+            add(buttonLeft)
+            currentPageField.value = currentPage
+            currentPageField.width = "25pt"
+            currentPageField.isReadOnly = true
+            add(currentPageField)
+            val slashLabel = NativeLabel("/")
+            slashLabel.addClassName("grid-page-bar-slash-label")
+            add(slashLabel)
+            numPagesField.value = numPages
+            numPagesField.width = "25pt"
+            numPagesField.isReadOnly = true
+            add(numPagesField)
+            add(buttonRight)
+            add(buttonDoubleRight)
+        }
+
+        fun enableGrid(grid: com.vaadin.flow.component.grid.Grid<T>) {
+            // Event handling
+            buttonLeft.addClickListener { event ->
+                currentPage = currentPageField.value
+                if (currentPage > 1) {
+                    currentPage--
+                    val pageList = pageListHandler.getPageAt(currentPage - 1)
+                    grid.setItems(pageList)
+                    currentPageField.value = currentPage
+                }
+            }
+            buttonDoubleLeft.addClickListener { event ->
+                val pageList = pageListHandler.getPageAt(0)
+                grid.setItems(pageList)
+                currentPageField.value = 1
+                currentPage = 1
+            }
+            buttonRight.addClickListener { event ->
+                numPages = numPagesField.value
+                currentPage = currentPageField.value
+                if (currentPage < numPages) {
+                    currentPage++
+                    val pageList = pageListHandler.getPageAt(currentPage - 1)
+                    grid.setItems(pageList)
+                    currentPageField.value = currentPage
+                }
+            }
+            buttonDoubleRight.addClickListener { event ->
+                currentPage = numPagesField.value
+                val pageList = pageListHandler.getPageAt(currentPage - 1)
+                grid.setItems(pageList)
+                currentPageField.value = currentPage
+            }
+        }
+
+    }
+
     class GridFactory {
 
         companion object {
 
-            fun <T> buildGrid(gridModel: MutableList<T>, gridClass: Class<T>, messages: MessageSource): com.vaadin.flow.component.grid.Grid<T>  {
+            fun <T> buildGrid(gridModel: MutableList<T>, gridClass: Class<T>, messages: MessageSource, pageListHandler: PageListHandler<T>, pageBar: PageBar<T>): com.vaadin.flow.component.grid.Grid<T>  {
                 val grid = com.vaadin.flow.component.grid.Grid(gridClass, false)
+                val headerBus = HeaderBus()
                 gridClass.declaredFields.forEach { field ->
                     val fieldAnnotation = field.getAnnotation(Field::class.java)
                     val listFieldAnnotation = field.getAnnotation(ListField::class.java)
                     if ((fieldAnnotation != null) && (listFieldAnnotation != null)) {
+                        field.trySetAccessible()
+                        val headerComponent = HeaderComponent(messages.getMessage(fieldAnnotation.key, null, LocaleContextHolder.getLocale()))
                         val gridColumn = grid.addColumn {
                             field.trySetAccessible()
-                            field.get(it)
-                        }.setHeader(messages.getMessage(fieldAnnotation.key, null, LocaleContextHolder.getLocale()))
+                            val sourceValue = field.get(it)
+                            ValueFormatter.getValue(sourceValue)
+                        }.setHeader(headerComponent)
                         gridColumn.setAutoWidth(true)
+                        gridColumn.setResizable(true)
+                        headerComponent.addHeaderListener({event ->
+                            pageListHandler.sortBy(field.name, event.targetStatus)
+                            grid.setItems(pageListHandler.getPageAt(pageBar.currentPage - 1))
+                        })
+                        headerBus.addHeaderComponent(headerComponent)
                     }
                 }
                 grid.setItems(gridModel)
@@ -167,7 +194,164 @@ class Grid<T>(val titleKey: String, gridModel: List<T>, val modelClass: Class<T>
         }
     }
 
-    class PageListHandler<T>(val list: List<T>, val pageSize:Int = DEFAULT_PAGE_SIZE) {
+    class ComparatorFactory {
+
+        companion object {
+
+            fun <T> getComparator(field: java.lang.reflect.Field, classType: Class<T>): java.util.Comparator<T>? {
+                return java.util.Comparator({i1: T, i2: T ->
+                    field.trySetAccessible()
+                    val fieldValue1 = field.get(i1)
+                    val fieldValue2 = field.get(i2)
+                    if (fieldValue1 == null && fieldValue2 == null) {
+                        - 1 // Strict order, not equals
+                    }
+                    if (fieldValue1 == null ) {
+                        - 1
+                    } else if (fieldValue2 == null) {
+                        1
+                    } else {
+                        val fieldComparator = getFieldComparator(fieldValue1.javaClass)
+                        val comparationValue = fieldComparator!!.compare(fieldValue1, fieldValue2)
+                        if (comparationValue == 0) {
+                            - 1 // Force strict order
+                        } else {
+                            comparationValue
+                        }
+                    }
+                })
+            }
+
+            fun <T> getReverseComparator(comparator: java.util.Comparator<T>): java.util.Comparator<T> {
+                val reverseComparator: java.util.Comparator<T> =  java.util.Comparator<T> { o1: T, o2: T  ->
+                    - comparator.compare(o1, o2)
+                }
+                return reverseComparator
+            }
+
+            // TODO Add remaning types
+            private fun <F> getFieldComparator(comparingClass: Class<F>): Comparator<F>? {
+                var targetComparator:Comparator<F>? = null
+                if (comparingClass.isAssignableFrom(Int::class.java) || comparingClass.isAssignableFrom(Integer::class.java) ) {
+                    targetComparator = Comparator<Int> { o1, o2 -> o1 - o2 } as Comparator<F>
+                } else if (comparingClass.isAssignableFrom(String::class.java)) {
+                    targetComparator = Comparator<String> { o1, o2 -> o1.compareTo(o2) } as Comparator<F>
+                }
+                return targetComparator
+            }
+        }
+    }
+
+    class HeaderComponent(val headerTitle: String) : HorizontalLayout() {
+
+        enum class Status {UP,DOWN,NONE}
+
+        private var status: Status = Status.NONE
+        private val icon = Icon(VaadinIcon.MINUS)
+        var headerListeners: MutableList<HeaderListener> = ArrayList()
+
+        init {
+            addClassName("grid-column-header")
+            val label =NativeLabel(headerTitle)
+            add(label)
+            add(icon)
+            icon.addClickListener {
+                rotateStatus()
+                fireOrderStateChanged(HeaderEvent(this, status))
+            }
+        }
+
+        fun rotateStatus() {
+            when (status) {
+                Status.NONE -> {
+                    status = Status.UP
+                    icon.setIcon(VaadinIcon.ANGLE_UP)
+                }
+                Status.UP -> {
+                    status = Status.DOWN
+                    icon.setIcon(VaadinIcon.ANGLE_DOWN)
+                }
+                Status.DOWN -> {
+                    status = Status.NONE
+                    icon.setIcon(VaadinIcon.MINUS)
+                }
+            }
+        }
+
+        fun reset() {
+            status = Status.NONE
+            icon.setIcon(VaadinIcon.MINUS)
+        }
+
+        fun addHeaderListener(listener: HeaderListener) {
+            headerListeners.add(listener)
+        }
+
+        fun removeHeaderListener(listener: HeaderListener) {
+            headerListeners.remove(listener)
+        }
+
+        private fun fireOrderStateChanged(event: HeaderEvent) {
+            headerListeners.forEach { listener ->
+                listener.onOrderStateChanged(event)
+            }
+        }
+
+        fun interface HeaderListener {
+
+            fun onOrderStateChanged(event: HeaderEvent)
+
+        }
+
+        data class HeaderEvent(val headerComponent: HeaderComponent, val targetStatus: HeaderComponent.Status)
+
+    }
+
+    class HeaderBus : HeaderComponent.HeaderListener {
+
+        val headerComponentsList = ArrayList<HeaderComponent>()
+
+        fun addHeaderComponent(headerComponent: HeaderComponent) {
+            headerComponentsList.add(headerComponent)
+            headerComponent.addHeaderListener(this)
+        }
+
+        override fun onOrderStateChanged(event: HeaderComponent.HeaderEvent) {
+            val headerName = event.headerComponent.headerTitle
+            headerComponentsList.forEach {headerComponent ->
+                val currentHeaderName = headerComponent.headerTitle
+                if (currentHeaderName != headerName) {
+                    headerComponent.reset()
+                }
+            }
+        }
+
+    }
+
+    class ValueFormatter {
+
+        companion object {
+
+            // TODO Add remaning types
+            fun getValue(value: Any?): Any {
+                when (value) {
+                    is Int -> return value
+                    is Integer -> return value
+                    is String -> return value
+                    null -> return ""
+                    else -> return value.toString()
+                }
+            }
+        }
+    }
+
+    class PageListHandler<T>(var list: MutableList<T>, val pageSize:Int = DEFAULT_PAGE_SIZE) {
+
+        lateinit var originalList: MutableList<T>
+
+        init {
+            originalList = list
+        }
 
         fun getNumPages(): Int {
             return list.size / pageSize + 1
@@ -179,11 +363,37 @@ class Grid<T>(val titleKey: String, gridModel: List<T>, val modelClass: Class<T>
                 throw IndexOutOfBoundsException("Invalid pageIndex ${pageIndex} for num. pages ${getNumPages()}")
             } else {
                 val firstIndex = pageIndex * pageSize
-                var lastIndex =  if ((pageIndex + 1) * pageSize <= list.lastIndex) ((pageIndex + 1) * pageSize) else list.lastIndex
+                var lastIndex =  if ((pageIndex + 1) * pageSize - 1 <= list.lastIndex) ((pageIndex + 1) * pageSize - 1) else list.lastIndex
                 if (lastIndex < 0) lastIndex = 0
                 val subList = list.subList(firstIndex, if (list.isNotEmpty()) (lastIndex + 1) else 0)
                 return subList
             }
         }
+
+        fun sortBy(fieldName: String, sortingStatus: HeaderComponent.Status): List<T> {
+            if (list.isNotEmpty()) {
+                val first = list[0]
+                val listClass = (first as Any).javaClass as Class<T>
+                val field = listClass.getDeclaredField(fieldName)
+                when(sortingStatus) {
+                    HeaderComponent.Status.NONE -> {
+                        list = originalList
+                    }
+                    HeaderComponent.Status.UP -> {
+                        val comparator = ComparatorFactory.getComparator(field, listClass)
+                        val sortedSet = list.toSortedSet(comparator as Comparator<T>)
+                        list = ArrayList(sortedSet)
+                    }
+                    HeaderComponent.Status.DOWN -> {
+                        val comparator = ComparatorFactory.getComparator(field, listClass)
+                        val reverseComparator = ComparatorFactory.getReverseComparator(comparator as Comparator<T>)
+                        val sortedSet = list.toSortedSet(reverseComparator)
+                        list = ArrayList(sortedSet)
+                    }
+                }
+            }
+            return list
+        }
     }
+
 }

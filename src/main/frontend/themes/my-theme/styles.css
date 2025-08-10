@@ -84,6 +84,13 @@ vaadin-text-field.bordered::part(input-field) {
   justify-content: center;
 }
 
+.grid-column-header {
+   height: fit-content;
+   display: flex;
+   justify-content: flex-start;
+   font-size: var(--lumo-font-size-m);
+}
+
 .grid-column {
   display: block;
   overflow: hidden;
