@@ -1,5 +1,5 @@
-version: '3'
 services:
+# MAIN DB
   churierpv2-db:
     image: postgres:17.5
     volumes:
@@ -14,8 +14,46 @@ services:
       POSTGRES_PASSWORD: "angel7"
     networks:
       - churierpv2-net
+# KEYCLOAK
+  churierpv2-keycloak-db:
+    image: postgres:17.5
+    volumes:
+      - churierpv2-keycloak-db-volume:/var/lib/postgresql/data
+    ports:
+      - 8969:5432
+    expose:
+      - "5432"
+    environment:
+      POSTGRES_DB: "keycloakdb"
+      POSTGRES_USER: "keycloak"
+      POSTGRES_PASSWORD: "angel7"
+    networks:
+      - churierpv2-net
+  churierpv2-keycloak:
+    image: bitnami/keycloak:23.0.6
+    environment:
+      KEYCLOAK_DATABASE_VENDOR: postgresql
+      KEYCLOAK_DATABASE_HOST: churierpv2-keycloak-db
+      KEYCLOAK_DATABASE_NAME: keycloakdb
+      KEYCLOAK_DATABASE_USER: keycloak
+      KEYCLOAK_DATABASE_SCHEMA: public
+      KEYCLOAK_DATABASE_PASSWORD: angel7
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: Pa55w0rd
+  #    KC_HTTP_RELATIVE_PATH: /auth
+  #    KEYCLOAK_LOG_LEVEL: debug
+  #    KEYCLOAK_ROOT_LOG_LEVEL: DEBUG
+    ports:
+      - 8000:8080
+    expose:
+      - "8080"
+    depends_on:
+      - churierpv2-keycloak-db
+    networks:
+      - churierpv2-net
 volumes:
   churierpv2-db-volume:
+  churierpv2-keycloak-db-volume:
 networks:
   churierpv2-net:
     driver: bridge
