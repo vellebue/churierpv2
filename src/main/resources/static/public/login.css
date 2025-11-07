@@ -1,0 +1,51 @@
+html {
+    min-height: 100vh;
+}
+
+body {
+    min-height: 100vh;
+}
+
+label {
+    font-family: sans-serif;
+    font-size: 16px;
+    font-weight: bold;
+    min-width: 200px;
+    vertical-align: text-bottom;
+}
+
+input {
+    font-family: sans-serif;
+    font-size: 16px;
+    font-weight: normal;
+}
+
+.main-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+.column-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.form-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+}
+
+.form-block {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    min-height: 30px;
+}
+
+.label-span {
+    min-width: 100px;
+}

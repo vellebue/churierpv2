@@ -7,6 +7,8 @@ import com.vaadin.flow.component.html.NativeLabel
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.server.VaadinServletRequest
+import com.vaadin.flow.server.VaadinServletResponse
+import jakarta.servlet.http.Cookie
 import org.springframework.context.ApplicationContext
 import org.springframework.context.MessageSource
 import org.springframework.context.i18n.LocaleContextHolder
@@ -32,6 +34,7 @@ class TitleBar(val messages : MessageSource,
     companion object {
 
         const val LOGOUT_SUCCESS_URL = "/"
+        const val BEARER_TOKEN_COOKIE_NAME = "bearerToken"
 
         fun buildTitle(messages : MessageSource) : Component {
             val mainTile = messages.getMessage("main.title", null, LocaleContextHolder.getLocale())
@@ -56,6 +59,12 @@ class TitleBar(val messages : MessageSource,
             logoutButton.addClickListener {
                 UI.getCurrent().page.setLocation(LOGOUT_SUCCESS_URL)
                 val logoutHandler = SecurityContextLogoutHandler()
+                val response = VaadinServletResponse.getCurrent().httpServletResponse
+                // Expiry token cookie
+                val tokenCookie = Cookie(BEARER_TOKEN_COOKIE_NAME, "")
+                tokenCookie.path = "/"
+                tokenCookie.maxAge = 0
+                response.addCookie(tokenCookie)
                 logoutHandler.logout(
                     VaadinServletRequest.getCurrent().httpServletRequest, null,
                     null
