@@ -10,14 +10,15 @@ label {
     font-family: sans-serif;
     font-size: 16px;
     font-weight: bold;
-    min-width: 200px;
-    vertical-align: text-bottom;
+    min-width: 100px;
+    padding-top: 6px;
 }
 
 input {
     font-family: sans-serif;
     font-size: 16px;
     font-weight: normal;
+    background-color: white;
 }
 
 .main-container {
@@ -37,15 +38,50 @@ input {
     display: flex;
     flex-direction: column;
     justify-content: space-around;
+    min-height: 120px;
+    background-color: #E0E0E0;
+    border-width: 25px;
+    border-color: #E0E0E0;
+    border-style: solid;
+}
+
+.form-centered-block {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    padding-bottom: 10px;
+}
+
+.label-title {
+    font-size: 20px;
 }
 
 .form-block {
     display: flex;
     flex-direction: row;
     justify-content: flex-start;
-    min-height: 30px;
 }
 
 .label-span {
-    min-width: 100px;
+    display: flex;
+    flex-direction: row-reverse;
+}
+
+.submit-container {
+    padding-top: 10px;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    min-width: 100%;
+}
+
+.submit-button {
+    background-color: hsl(214, 100%, 48%);
+    color: white;
+    border-color: hsl(214, 100%, 48%);
+}
+
+.label-error {
+    color: red;
+    padding-bottom: 10px;
 }

@@ -9,6 +9,9 @@
     <div class="main-container">
       <div class="column-container">
         <form class="form-container" th:action="@{/}" method="POST">
+            <div class="form-centered-block">
+                <div class="label-span"><label class="label-title">Churierpweb V2</label></div>
+            </div>
             <div class="form-block">
                 <div class="label-span"><label>Username</label></div>
                 <div><input type="text" name="username" placeholder="Username"></div>
@@ -18,7 +21,12 @@
                 <div><input type="password" name="password" placeholder="Password"></div>
             </div>
             <div class="form-block">
-                <input type="submit" value="Login">
+                <div class="submit-container"><input class="submit-button" type="submit" value="Login"></div>
+            </div>
+            <div class="form-centered-block">
+                <div class="label-span">
+                    <label class="label-error" th:if="${error != null}">Invalid Login or password</label>
+                </div>
             </div>
         </form>
       </div>
