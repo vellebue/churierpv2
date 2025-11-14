@@ -141,3 +141,21 @@ vaadin-text-field.bordered::part(input-field) {
   display: flex;
   justify-content: center;
 }
+
+.detail-button-bar {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.green-button {
+    background-color: #008040;
+    font-weight: bold;
+    color: white;
+}
+
+.red-button {
+    background-color: #F00000;
+    font-weight: bold;
+    color: white;
+}

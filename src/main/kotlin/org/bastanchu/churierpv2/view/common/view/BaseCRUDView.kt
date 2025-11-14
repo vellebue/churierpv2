@@ -11,7 +11,7 @@ import java.util.stream.Collectors
 abstract class BaseCRUDView<F, L>(messages: MessageSource, applicationContext: ApplicationContext,
                                   filterViewClass: Class<in BaseFilterView<F, L>>,
                                   listViewClass: Class<in BaseListView<L>>,
-                                  detailViewClass: Class<in BaseDetailView<L>>) : BaseView(messages, applicationContext),
+                                  val detailViewClass: Class<in BaseDetailView<L>>) : BaseView(messages, applicationContext),
                                                                                   GridListener<L> {
     private lateinit var filterView: BaseFilterView<F, L>
     private lateinit var listView: BaseListView<L>
@@ -19,8 +19,10 @@ abstract class BaseCRUDView<F, L>(messages: MessageSource, applicationContext: A
 
     private val viewport = VerticalLayout()
 
+    lateinit var effectiveBaseCRUDViewClass: Class<BaseCRUDView<F,L>>
+
     init {
-        val effectiveBaseCRUDViewClass = this.javaClass
+        effectiveBaseCRUDViewClass = this.javaClass
         val filterViewContructor = filterViewClass.getConstructor(MessageSource::class.java,
             ApplicationContext::class.java, effectiveBaseCRUDViewClass)
         filterView = filterViewContructor.newInstance(messages, applicationContext, this) as BaseFilterView<F, L>
@@ -28,8 +30,8 @@ abstract class BaseCRUDView<F, L>(messages: MessageSource, applicationContext: A
             ApplicationContext::class.java, effectiveBaseCRUDViewClass)
         listView = listViewConstructor.newInstance(messages, applicationContext, this) as BaseListView<L>
         val detailedViewConstructor = detailViewClass.getConstructor(MessageSource::class.java,
-            ApplicationContext::class.java, effectiveBaseCRUDViewClass)
-        detailedView = detailedViewConstructor.newInstance(messages, applicationContext, this) as BaseDetailView<L>
+            ApplicationContext::class.java, effectiveBaseCRUDViewClass, Boolean::class.java)
+        detailedView = detailedViewConstructor.newInstance(messages, applicationContext, this, false) as BaseDetailView<L>
         add(viewport)
         addAndReplace(filterView)
     }
@@ -43,6 +45,26 @@ abstract class BaseCRUDView<F, L>(messages: MessageSource, applicationContext: A
         addAndReplace(filterView)
     }
 
+    fun notifyNewItemPerformed() {
+        val detailedViewConstructor = detailViewClass.getConstructor(MessageSource::class.java,
+            ApplicationContext::class.java, effectiveBaseCRUDViewClass, Boolean::class.java)
+        detailedView = detailedViewConstructor.newInstance(messages, applicationContext, this, true) as BaseDetailView<L>
+        val newItemFormModel = detailedView.buildNewItemModel()
+        detailedView.establishFormModel(newItemFormModel)
+        addAndReplace(detailedView)
+    }
+
+    fun notifyBackFromDetailPerformed() {
+        addAndReplace(listView)
+    }
+
+    fun notifyCreateItemPerformed(item: L) {
+        val listModel = listView.getListModel()
+        listModel.add(item)
+        listView.updateListModel(listModel)
+        addAndReplace(listView)
+    }
+
     private fun addAndReplace(component: Component) {
         val childrenList = viewport.children.collect(Collectors.toList())
         if (childrenList.isNotEmpty()) {
@@ -54,6 +76,11 @@ abstract class BaseCRUDView<F, L>(messages: MessageSource, applicationContext: A
 
     override fun itemSelected(event: GridEvent<L>) {
         logger.debug("Event selected: ${event.item!!::class.java.simpleName}")
+        val detailedViewConstructor = detailViewClass.getConstructor(MessageSource::class.java,
+            ApplicationContext::class.java, effectiveBaseCRUDViewClass, Boolean::class.java)
+        detailedView = detailedViewConstructor.newInstance(messages, applicationContext, this, false) as BaseDetailView<L>
+        val newItemFormModel = detailedView.buildNewItemModel()
+        detailedView.establishFormModel(newItemFormModel)
         addAndReplace(detailedView)
         detailedView.establishFormModel(event.item!!)
     }

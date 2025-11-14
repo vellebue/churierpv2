@@ -4,6 +4,7 @@ import com.vaadin.flow.component.button.Button
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import org.bastanchu.churierpv2.view.common.Grid
+import org.bastanchu.churierpv2.view.common.button.GreenButton
 import org.springframework.context.ApplicationContext
 import org.springframework.context.MessageSource
 import org.springframework.context.i18n.LocaleContextHolder
@@ -34,6 +35,10 @@ abstract class BaseListView<L>(val messages: MessageSource,
         grid.updateModel(listModel)
     }
 
+    fun getListModel(): MutableList<L> {
+        return grid.getCurrentModel()
+    }
+
     private fun buildButtonBar(): HorizontalLayout {
         val buttonBar = HorizontalLayout()
         buttonBar.addClassName("grid-button-bar")
@@ -42,8 +47,15 @@ abstract class BaseListView<L>(val messages: MessageSource,
             parent.notifyBackFromListPerformed()
         }
         buttonBar.add(backButton)
+        val greenButton = GreenButton(getNewItemButtonText())
+        greenButton.addClickListener {
+            parent.notifyNewItemPerformed()
+        }
+        buttonBar.add(greenButton)
         return buttonBar
     }
 
     abstract fun getDefaultPageSize(): Int
+
+    abstract fun getNewItemButtonText(): String
 }

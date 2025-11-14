@@ -20,7 +20,11 @@ import kotlin.jvm.Throws
 import kotlin.jvm.javaClass
 
 
-class Grid<T>(val titleKey: String, gridModel: MutableList<T>, val modelClass: Class<T>, val messages: MessageSource, var pageSize:Int = DEFAULT_PAGE_SIZE) : VerticalLayout() {
+class Grid<T>(private val titleKey: String,
+              private var gridModel: MutableList<T>,
+              private val modelClass: Class<T>,
+              private val messages: MessageSource,
+              private var pageSize:Int = DEFAULT_PAGE_SIZE) : VerticalLayout() {
 
     lateinit var grid: com.vaadin.flow.component.grid.Grid<T>
     val gridListeners = mutableListOf<GridListener<T>>()
@@ -45,8 +49,14 @@ class Grid<T>(val titleKey: String, gridModel: MutableList<T>, val modelClass: C
 
     fun updateModel(gridModel: MutableList<T>) {
         // TODO Refactor
-        //this.gridModel = gridModel
+        this.gridModel = gridModel
         buildGrid(gridModel)
+    }
+
+    fun getCurrentModel(): MutableList<T> {
+        val targetModel = ArrayList<T>()
+        targetModel.addAll(this.gridModel)
+        return targetModel
     }
 
     private fun buildGrid(gridModel: MutableList<T>) {
