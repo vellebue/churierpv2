@@ -4,16 +4,20 @@ import org.bastanchu.churierpv2.view.common.annotations.Field
 import org.bastanchu.churierpv2.view.common.annotations.FormField
 import org.bastanchu.churierpv2.view.common.annotations.ListField
 
-data class SocietyDto(@Field(key = "societies.form.companyId.key")
+data class SocietyDto(@Field(key = "societies.form.societyId.key")
                       @FormField(groupId = 0, indexInGroup = 0)
-                      @ListField
-                      var companyId: Int? = null,
+                      @ListField(identifier = true)
+                      var societyId: Int? = null,
                       @Field(key = "societies.form.name.key")
-                      @FormField(groupId = 0, indexInGroup = 1, colspan = 3)
+                      @FormField(groupId = 0, indexInGroup = 1, colspan = 1)
                       @ListField
                       var name: String? = "",
+                      @Field(key = "societies.form.commercialName.key")
+                      @FormField(groupId = 0, indexInGroup = 2, colspan = 2)
+                      @ListField
+                      var commercialName: String? = "",
                       @Field(key = "societies.form.socialName.key")
-                      @FormField(groupId = 1, indexInGroup = 2, colspan = 2)
+                      @FormField(groupId = 1, indexInGroup = 3, colspan = 2)
                       @ListField
                       var socialName: String? = "",
                       @Field(key = "societies.form.vatNumber.key")

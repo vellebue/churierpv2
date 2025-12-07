@@ -39,6 +39,14 @@ abstract class BaseListView<L>(val messages: MessageSource,
         return grid.getCurrentModel()
     }
 
+    fun addOrUpdateItem(item: L) {
+        grid.addOrUpdateItem(item)
+    }
+
+    fun deleteItem(item: L) {
+        grid.deleteItem(item)
+    }
+
     private fun buildButtonBar(): HorizontalLayout {
         val buttonBar = HorizontalLayout()
         buttonBar.addClassName("grid-button-bar")

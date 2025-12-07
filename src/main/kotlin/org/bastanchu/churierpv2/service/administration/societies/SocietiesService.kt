@@ -5,5 +5,11 @@ import org.bastanchu.churierpv2.dto.administration.societies.SocietyDto
 
 interface SocietiesService {
 
-    public fun filterSocieties(filterDto: SocietiesFilterDto): List<SocietyDto>
+    fun filterSocieties(filterDto: SocietiesFilterDto): List<SocietyDto>
+
+    fun createSociety(societyDto: SocietyDto)
+
+    fun updateSociety(societyDto: SocietyDto)
+
+    fun deleteSociety(societyDto: SocietyDto)
 }

@@ -65,6 +65,16 @@ abstract class BaseCRUDView<F, L>(messages: MessageSource, applicationContext: A
         addAndReplace(listView)
     }
 
+    fun notifyUpdateItemPerformed(item: L) {
+        listView.addOrUpdateItem(item)
+        addAndReplace(listView)
+    }
+
+    fun notifyDeleteItemPerformed(item: L) {
+        listView.deleteItem(item)
+        addAndReplace(listView)
+    }
+
     private fun addAndReplace(component: Component) {
         val childrenList = viewport.children.collect(Collectors.toList())
         if (childrenList.isNotEmpty()) {

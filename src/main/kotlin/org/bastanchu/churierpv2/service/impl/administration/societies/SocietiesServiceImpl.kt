@@ -1,60 +1,65 @@
 package org.bastanchu.churierpv2.service.impl.administration.societies
 
+import org.bastanchu.churierpv2.dao.administration.addresses.AddressDao
+import org.bastanchu.churierpv2.dao.administration.addresses.CountriesDao
+import org.bastanchu.churierpv2.dao.administration.addresses.RegionsDao
+import org.bastanchu.churierpv2.dao.administration.societies.SocietiesDao
 import org.bastanchu.churierpv2.dto.administration.societies.SocietiesFilterDto
 import org.bastanchu.churierpv2.dto.administration.societies.SocietyDto
+import org.bastanchu.churierpv2.entity.administration.adresses.AddressTypeEnum
+import org.bastanchu.churierpv2.entity.administration.adresses.RegionPk
+import org.bastanchu.churierpv2.entity.administration.societies.Society
 import org.bastanchu.churierpv2.service.administration.societies.SocietiesService
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 
 @Service
 @Transactional(value = "transactionManager", propagation = Propagation.REQUIRED)
-open class SocietiesServiceImpl : SocietiesService {
+open class SocietiesServiceImpl(@Autowired val societiesDao : SocietiesDao,
+                                @Autowired val addressDao : AddressDao,
+                                @Autowired val countriesDao: CountriesDao,
+                                @Autowired val regionsDao : RegionsDao) :
+           SocietiesService {
 
     override fun filterSocieties(filterDto: SocietiesFilterDto): List<SocietyDto> {
-        val society1 = SocietyDto(0, "Grupo Varma", "Grupo Varma SL",
-                                  "46931298M", 0, "SOC", "C/ La Granja 15",
-                                   "28108", "Madrid", "ES", "28")
-        val society2 = SocietyDto(1, "Bastanchur", "Bastanchur CORP",
-            "53108437B", 1, "SOC", "C/ Jabonería 18 1 B",
-            "28921", "Alcorcón", "ES", "28")
-        val society3 = SocietyDto(2, "Grupo Varma", "Grupo Varma SL",
-            "46931298M", 0, "SOC", "C/ La Granja 15",
-            "28108", "Madrid", "ES", "28")
-        val society4 = SocietyDto(3, "Bastanchur", "Bastanchur CORP",
-            "53108437B", 1, "SOC", "C/ Jabonería 18 1 B",
-            "28921", "Alcorcón", "ES", "28")
-        val society5 = SocietyDto(4, "Grupo Varma", "Grupo Varma SL",
-            "46931298M", 0, "SOC", "C/ La Granja 15",
-            "28108", "Madrid", "ES", "28")
-        val society6 = SocietyDto(5, "Bastanchur", "Bastanchur CORP",
-            "53108437B", 1, "SOC", "C/ Jabonería 18 1 B",
-            "28921", "Alcorcón", "ES", "28")
-        val society7 = SocietyDto(6, "Grupo Varma", "Grupo Varma SL",
-            "46931298M", 0, "SOC", "C/ La Granja 15",
-            "28108", "Madrid", "ES", "28")
-        val society8 = SocietyDto(7, "Bastanchur", "Bastanchur CORP",
-            "53108437B", 1, "SOC", "C/ Jabonería 18 1 B",
-            "28921", "Alcorcón", "ES", "28")
-        val society9 = SocietyDto(8, "Grupo Varma", "Grupo Varma SL",
-            "46931298M", 0, "SOC", "C/ La Granja 15",
-            "28108", "Madrid", "ES", "28")
-        val society10 = SocietyDto(9, "Bastanchur", "Bastanchur CORP",
-            "53108437B", 1, "SOC", "C/ Jabonería 18 1 B",
-            "28921", "Alcorcón", "ES", "28")
-        val society11 = SocietyDto(10, "Grupo Varma", "Grupo Varma SL",
-            "46931298M", 0, "SOC", "C/ La Granja 15",
-            "28108", "Madrid", "ES", "28")
-        val society12 = SocietyDto(11, "Bastanchur", "Bastanchur CORP",
-            "53108437B", 1, "SOC", "C/ Jabonería 18 1 B",
-            "28921", "Alcorcón", "ES", "28")
-        val society13 = SocietyDto(12, "Grupo Varma", "Grupo Varma SL",
-            "46931298M", 0, "SOC", "C/ La Granja 15",
-            "28108", "Madrid", "ES", "28")
-        val society14 = SocietyDto(13, "Bastanchur", "Bastanchur CORP",
-            "53108437B", 1, "SOC", "C/ Jabonería 18 1 B",
-            "28921", "Alcorcón", "ES", "28")
-        val result = listOf(society1, society2, society3, society4, society5, society6, society7, society8, society9, society10, society11, society12, society13, society14)
-        return result
+        var societyFilter = Society()
+        societyFilter.commercialName = filterDto.name
+        societyFilter.socialName= filterDto.socialName
+        val societies = societiesDao.filter(societyFilter)
+        return societiesDao.toValueObjectList(societies)
+    }
+
+    override fun createSociety(societyDto: SocietyDto) {
+        val society = societiesDao.fromValueObjectToEntity(societyDto)
+        val address = societiesDao.buildNewAdressFromSocietyDto(societyDto)
+        val addressType = addressDao.loadAddressType(AddressTypeEnum.SOCIETY_ADDRESS)
+        address.type = addressType.typeId
+        val country = countriesDao.getById(societyDto.countryId!!)
+        address.country = country
+        val regionPk = RegionPk(societyDto.countryId!!, societyDto.regionId!!)
+        val region = regionsDao.getById(regionPk)
+        address.region = region
+        society.address = address
+        societiesDao.create(society)
+        societyDto.societyId = society.societyId
+    }
+
+    override fun updateSociety(societyDto: SocietyDto) {
+        val society = societiesDao.fromValueObjectToEntity(societyDto)
+        val addressDto = societiesDao.buildNewAdressDtoFromSocietyDto(societyDto)
+        val address = society.address!!
+        addressDto.addressId = address.addressId
+        addressDao.fromValueObjectToEntity(addressDto, address)
+        val country = countriesDao.getById(societyDto.countryId!!)
+        society.address?.country = country
+        val regionPk = RegionPk(societyDto.countryId!!, societyDto.regionId!!)
+        val region = regionsDao.getById(regionPk)
+        address.region = region
+    }
+
+    override fun deleteSociety(societyDto: SocietyDto) {
+        societiesDao.deleteById(societyDto.societyId!!)
     }
 }

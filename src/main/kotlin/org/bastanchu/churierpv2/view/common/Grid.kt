@@ -59,6 +59,34 @@ class Grid<T>(private val titleKey: String,
         return targetModel
     }
 
+    fun addOrUpdateItem(item :T) {
+        val currentModel = getCurrentModel()
+        val itemKeyMap = getItemKeyMap(item)
+        for (i in 0..(currentModel.size - 1)) {
+            val currentModelKeyMap = getItemKeyMap(currentModel[i])
+            if (currentModelKeyMap == itemKeyMap) {
+                currentModel[i] = item
+            }
+        }
+        updateModel(currentModel)
+    }
+
+    fun deleteItem(item: T) {
+        var i = 0
+        var itemToDeleteFound = false
+        val currentModel = getCurrentModel()
+        val itemKeyMap = getItemKeyMap(item)
+        while ((i < currentModel.size) && !itemToDeleteFound) {
+            val currentModelKeyMap = getItemKeyMap(currentModel[i])
+            if (currentModelKeyMap == itemKeyMap) {
+                itemToDeleteFound = true
+                currentModel.removeAt(i)
+            }
+            i++
+        }
+        updateModel(currentModel)
+    }
+
     private fun buildGrid(gridModel: MutableList<T>) {
         clearGrid()
         val titleContainer = HorizontalLayout()
@@ -102,6 +130,19 @@ class Grid<T>(private val titleKey: String,
         childrenList.forEach {
             it.removeFromParent()
         }
+    }
+
+    private fun getItemKeyMap(item: T): Map<String, Any?> {
+        val declaredFields = item!!::class.java.declaredFields
+        val targetMap = HashMap<String, Any?>()
+        declaredFields.forEach { field ->
+            field.isAccessible = true
+            val listFieldAnnotation = field.getAnnotation(ListField::class.java)
+            if ((listFieldAnnotation != null) && (listFieldAnnotation.identifier)) {
+                targetMap[field.name] = field.get(item)
+            }
+        }
+        return targetMap;
     }
 
     class PageBar<T>(val pageListHandler: PageListHandler<T>): HorizontalLayout() {

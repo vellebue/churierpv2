@@ -1,6 +1,8 @@
 package org.bastanchu.churierpv2.view.common.view
 
+import com.vaadin.flow.component.ComponentEventListener
 import com.vaadin.flow.component.button.Button
+import com.vaadin.flow.component.confirmdialog.ConfirmDialog
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import org.bastanchu.churierpv2.view.common.Form
@@ -70,12 +72,17 @@ abstract class BaseDetailView<L>(val messages: MessageSource,
         buttonBar.add(backButton)
         val updateButton = BlueButton(getUpdateButtonText())
         updateButton.addClickListener {
-
+            val item = form.retrieveFormModel()
+            updateItem(item)
+            parent.notifyUpdateItemPerformed(item)
         }
         buttonBar.add(updateButton)
         val deleteButton = RedButton(getDeleteButtonText())
         deleteButton.addClickListener {
-
+            val item = form.retrieveFormModel()
+            buildDeleteDialog(item) {
+                deleteItem(item)
+            }
         }
         buttonBar.add(deleteButton)
         return buttonBar
@@ -85,7 +92,31 @@ abstract class BaseDetailView<L>(val messages: MessageSource,
         onCreateItem(item)
     }
 
+    private fun updateItem(item: L) {
+        onUpdateItem(item)
+    }
+
+    private fun deleteItem(item: L) {
+        onDeleteItem(item)
+    }
+
+    private fun buildDeleteDialog(item: L, confirmDeleteListener: ComponentEventListener<ConfirmDialog.ConfirmEvent>) {
+        val dialog = ConfirmDialog()
+        dialog.setHeader(messages.getMessage("baseDetalView.cancelDialog.header", null, LocaleContextHolder.getLocale()))
+        dialog.setText(messages.getMessage(getDeleteDialogTextKey(), null, LocaleContextHolder.getLocale()))
+        dialog.setConfirmButton(messages.getMessage("baseDetalView.cancelDialog.deleteButton", null, LocaleContextHolder.getLocale()),
+            {event ->
+                                confirmDeleteListener.onComponentEvent(event)
+                                parent.notifyDeleteItemPerformed(item)
+                            })
+        dialog.setCancelButton(messages.getMessage("baseDetalView.cancelDialog.cancelButton", null, LocaleContextHolder.getLocale()),
+               {})
+        dialog.open()
+    }
+
     abstract fun getFormTitleKey(): String
+
+    abstract fun getDeleteDialogTextKey(): String
 
     abstract fun getCreateButtonText(): String
 
@@ -98,4 +129,8 @@ abstract class BaseDetailView<L>(val messages: MessageSource,
     abstract fun completeItemModel(item: L): L
 
     abstract fun onCreateItem(item: L)
+
+    abstract fun onUpdateItem(item: L)
+
+    abstract fun onDeleteItem(item: L)
 }
