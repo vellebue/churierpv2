@@ -26,6 +26,7 @@ abstract class BaseDetailView<L>(val messages: MessageSource,
         autowireComponents(applicationContext)
         val mainView = VerticalLayout()
         val formModel = listItemDtoClass.getDeclaredConstructor().newInstance()
+        completeItemModel(formModel)
         val form = Form(getFormTitleKey(), formModel, messages)
         this.form = form
         mainView.add(form)
@@ -40,6 +41,7 @@ abstract class BaseDetailView<L>(val messages: MessageSource,
     }
 
     fun establishFormModel(formModel: L) {
+        completeItemModel(formModel)
         form.establishFormModel(formModel)
     }
 

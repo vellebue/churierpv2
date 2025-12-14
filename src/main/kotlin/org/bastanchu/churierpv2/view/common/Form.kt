@@ -2,6 +2,8 @@ package org.bastanchu.churierpv2.view.common
 
 import com.vaadin.flow.component.AbstractField
 import com.vaadin.flow.component.Component
+import com.vaadin.flow.component.ItemLabelGenerator
+import com.vaadin.flow.component.combobox.ComboBox
 import com.vaadin.flow.component.formlayout.FormLayout
 import com.vaadin.flow.component.html.NativeLabel
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout
@@ -122,7 +124,35 @@ class Form<T>(val titleKey : String, var formModel : T, val messages : MessageSo
                         if (fieldAnnotation != null) {
                             // TODO More type cases
                             if (field.type.isAssignableFrom(String::class.java)) {
-                                component = buildTextField(fieldAnnotation, fieldValue?.toString(), messages) as AbstractField<*,in Any?>?
+                                if ((formFieldAnnotation?.comboBoxConfiguration?.mapFieldName != "") &&
+                                    (formFieldAnnotation?.comboBoxConfiguration?.conditionFieldName != "")) {
+                                    val mapFieldName = formFieldAnnotation?.comboBoxConfiguration?.mapFieldName
+                                    val mapField = formModel!!::class.java.declaredFields.filter { it.name == mapFieldName }[0]
+                                    mapField.trySetAccessible()
+                                    val fullValuesMap = mapField.get(formModel) as Map<String, Map<String, String>>
+                                    val parentFieldName = formFieldAnnotation?.comboBoxConfiguration?.conditionFieldName
+                                    val parentField = formModel!!::class.java.declaredFields.filter { it.name == parentFieldName }[0]
+                                    parentField.trySetAccessible()
+                                    val parentFieldValue = parentField.get(formModel) as String
+                                    component = buildSurrogateComboBoxField(fieldAnnotation, fieldValue?.toString(), parentFieldValue, messages, fullValuesMap) as AbstractField<*, in Any?>?
+                                } else if (formFieldAnnotation?.comboBoxConfiguration?.mapFieldName != "") {
+                                    val mapFieldName = formFieldAnnotation?.comboBoxConfiguration?.mapFieldName
+                                    val mapField = formModel!!::class.java.declaredFields.filter { it.name == mapFieldName }[0]
+                                    mapField.trySetAccessible()
+                                    val mapValue = mapField.get(formModel) as Map<String, String>
+                                    component = buildComboBoxField(
+                                        fieldAnnotation,
+                                        fieldValue?.toString(),
+                                        messages,
+                                        mapValue
+                                    ) as AbstractField<*, in Any?>?
+                                } else {
+                                    component = buildTextField(
+                                        fieldAnnotation,
+                                        fieldValue?.toString(),
+                                        messages
+                                    ) as AbstractField<*, in Any?>?
+                                }
                             }
                             else if (field.type.isAssignableFrom(Integer::class.java)) {
                                 component = buildIntegerField(fieldAnnotation, fieldValue as Int?, messages) as AbstractField<*,in Any?>?
@@ -143,7 +173,7 @@ class Form<T>(val titleKey : String, var formModel : T, val messages : MessageSo
                     //formRow.addClassName("form-row")
                 }
                 formLayout.add(*formRowsArray.toTypedArray())
-                return FormStructure(formLayout, modelMap)
+                return FormStructure(formLayout, modelMap, formFields)
             }
 
             private fun splitFormModelFields(declaredFields: Array<java.lang.reflect.Field>) : List<List<java.lang.reflect.Field>> {
@@ -178,6 +208,22 @@ class Form<T>(val titleKey : String, var formModel : T, val messages : MessageSo
                 return textField
             }
 
+            private fun buildComboBoxField(fieldAnnotation: Field, value: String?, messages: MessageSource, valuesMap: Map<String, String>) : ComboBox<String> {
+                val comboBox = ComboBox<String>(messages.getMessage(fieldAnnotation.key, null, LocaleContextHolder.getLocale()))
+                comboBox.setItems(valuesMap.keys)
+                comboBox.setItemLabelGenerator({
+                    valuesMap[it]
+                })
+                comboBox.value = value ?: ""
+                return comboBox
+            }
+
+            private fun buildSurrogateComboBoxField(fieldAnnotation: Field, value: String?, parentValue: String?, messages: MessageSource, fullValuesMap: Map<String, Map<String, String>>) : ComboBox<String> {
+                val fieldLabel = messages.getMessage(fieldAnnotation.key, null, LocaleContextHolder.getLocale())
+                val surrogateComboBox = SurrogateComboBox(fieldLabel, value, parentValue, fullValuesMap)
+                return surrogateComboBox
+            }
+
             private fun buildIntegerField(fieldAnnotation: Field, value: Int?, messages: MessageSource) : IntegerField {
                 val integerField = IntegerField(messages.getMessage(fieldAnnotation.key, null, LocaleContextHolder.getLocale()))
                 if (value != null) {
@@ -192,7 +238,57 @@ class Form<T>(val titleKey : String, var formModel : T, val messages : MessageSo
 
     data class FieldStructure(val component: AbstractField<*,in Any?>)
 
-    data class FormStructure(val formLayout: FormLayout,
-                             val modelMap: Map<String, FieldStructure>)
+    class FormStructure(val formLayout: FormLayout,
+                        val modelMap: Map<String, FieldStructure>,
+                        val formFields: Array<java.lang.reflect.Field>) {
+
+        init {
+            solveCrossReferences()
+        }
+
+        private fun solveCrossReferences() {
+            solveComboBoxCrossReferences()
+        }
+
+        private fun solveComboBoxCrossReferences() {
+            val surrogateComboBoxFields = formFields.filter {
+                val formFieldAnnotation = it.getAnnotation(FormField::class.java)
+                (formFieldAnnotation != null) && (formFieldAnnotation.comboBoxConfiguration.mapFieldName) != "" && (formFieldAnnotation.comboBoxConfiguration.conditionFieldName != "")}
+            surrogateComboBoxFields.forEach {
+                val fieldName = it.name
+                val formFieldAnnotation = it.getAnnotation(FormField::class.java)
+                val fieldStructure = modelMap[fieldName]
+                val component = fieldStructure?.component as SurrogateComboBox
+                val parentComboBox = modelMap[formFieldAnnotation.comboBoxConfiguration.conditionFieldName]?.component as ComboBox<String>
+                component.assignParentComboBox(parentComboBox)
+            }
+        }
+    }
+
+    class SurrogateComboBox(label: String, value: String?, parentValue: String?, val fullValuesMap: Map<String, Map<String, String>>) : ComboBox<String>(label) {
+        init {
+            if (parentValue != null) {
+                val valuesMap = fullValuesMap[parentValue]
+                setItems(valuesMap?.keys ?: listOf(""))
+                setItemLabelGenerator({ it: String -> if (it != "") (valuesMap?.get(it) ?: "") else "" })
+            } else {
+                setItems(setOf(""))
+                setItemLabelGenerator({ "" })
+            }
+            if (value != null) {
+                setValue(value)
+            }
+        }
+
+        fun assignParentComboBox(parentComboBox: ComboBox<String>) {
+            parentComboBox.addValueChangeListener { event ->
+                val newValue = event.value
+                val newValuesMap : Map<String, String> = fullValuesMap[newValue] ?: mapOf("" to "")
+                setItems(newValuesMap?.keys)
+                setItemLabelGenerator({it: String -> if (it != "") (newValuesMap?.get(it) ?: "") else "" })
+                value = newValuesMap?.keys?.first()
+            }
+        }
+    }
 
 }

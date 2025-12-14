@@ -5,6 +5,7 @@ import java.sql.Timestamp
 
 import jakarta.persistence.*
 import org.springframework.security.oauth2.jwt.Jwt
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 
 @MappedSuperclass
 abstract class TraceableEntity {
@@ -23,12 +24,15 @@ abstract class TraceableEntity {
 
     private fun getCurrentUserLoginInSession(): String {
         val auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth is Jwt) {
-            val claims = auth?.claims
-            if (claims != null) {
-                val login = claims.get("preferred_username") as String
-                if (login != null) {
-                    return login
+        if (auth is JwtAuthenticationToken) {
+            val principal = auth.principal
+            if (principal is Jwt) {
+                val claims = principal.claims as Map<String, Any?>
+                if (claims != null) {
+                    val login = claims.get("preferred_username") as String
+                    if (login != null) {
+                        return login
+                    }
                 }
             }
             return auth.name

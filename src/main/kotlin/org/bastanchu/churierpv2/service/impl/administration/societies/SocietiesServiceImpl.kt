@@ -17,14 +17,14 @@ import org.springframework.transaction.annotation.Transactional
 
 @Service
 @Transactional(value = "transactionManager", propagation = Propagation.REQUIRED)
-open class SocietiesServiceImpl(@Autowired val societiesDao : SocietiesDao,
-                                @Autowired val addressDao : AddressDao,
-                                @Autowired val countriesDao: CountriesDao,
-                                @Autowired val regionsDao : RegionsDao) :
+open class SocietiesServiceImpl(@field:Autowired val societiesDao : SocietiesDao,
+                                @field:Autowired val addressDao : AddressDao,
+                                @field:Autowired val countriesDao: CountriesDao,
+                                @field:Autowired val regionsDao : RegionsDao) :
            SocietiesService {
 
     override fun filterSocieties(filterDto: SocietiesFilterDto): List<SocietyDto> {
-        var societyFilter = Society()
+        val societyFilter = Society()
         societyFilter.commercialName = filterDto.name
         societyFilter.socialName= filterDto.socialName
         val societies = societiesDao.filter(societyFilter)

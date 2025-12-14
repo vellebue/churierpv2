@@ -1,10 +1,11 @@
 package org.bastanchu.churierpv2.view.administration.societies
 
 import org.bastanchu.churierpv2.dto.administration.societies.SocietyDto
+import org.bastanchu.churierpv2.service.administration.adresses.CountryService
+import org.bastanchu.churierpv2.service.administration.adresses.RegionService
 import org.bastanchu.churierpv2.service.administration.societies.SocietiesService
 import org.bastanchu.churierpv2.view.common.view.BaseDetailView
 import org.bastanchu.churierpv2.view.common.view.annotation.Injected
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 
 import org.springframework.context.MessageSource
@@ -17,6 +18,10 @@ class SocietiesDetailView(messages: MessageSource,
 
     @Injected
     lateinit var societiesService: SocietiesService
+    @Injected
+    lateinit var countryService: CountryService
+    @Injected
+    lateinit var regionService: RegionService
 
     override fun getFormTitleKey(): String {
         return "societies.detailView.title"
@@ -43,6 +48,10 @@ class SocietiesDetailView(messages: MessageSource,
     }
 
     override fun completeItemModel(item: SocietyDto): SocietyDto {
+        val countriesMap = countryService.retieveCountriesMap()
+        item.countriesMap = countriesMap
+        val regionsMap = regionService.retrieveRegionsMap()
+        item.regionsMap = regionsMap
         return item
     }
 

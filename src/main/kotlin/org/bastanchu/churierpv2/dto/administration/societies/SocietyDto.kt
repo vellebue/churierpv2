@@ -1,5 +1,6 @@
 package org.bastanchu.churierpv2.dto.administration.societies
 
+import org.bastanchu.churierpv2.view.common.annotations.ComboBoxConfiguration
 import org.bastanchu.churierpv2.view.common.annotations.Field
 import org.bastanchu.churierpv2.view.common.annotations.FormField
 import org.bastanchu.churierpv2.view.common.annotations.ListField
@@ -42,11 +43,13 @@ data class SocietyDto(@Field(key = "societies.form.societyId.key")
                       @ListField
                       var city: String? = "",
                       @Field(key = "societies.form.countryId.key")
-                      @FormField(groupId = 3, indexInGroup = 2)
+                      @FormField(groupId = 3, indexInGroup = 2, comboBoxConfiguration = ComboBoxConfiguration(mapFieldName = "countriesMap"))
                       @ListField
                       var countryId: String? = "",
+                      var countriesMap: Map<String, String> = mutableMapOf(),
                       @Field(key = "societies.form.regionId.key")
-                      @FormField(groupId = 3, indexInGroup = 3)
+                      @FormField(groupId = 3, indexInGroup = 3, comboBoxConfiguration = ComboBoxConfiguration(mapFieldName = "regionsMap", conditionFieldName = "countryId"))
                       @ListField
-                      var regionId: String? = "") {
+                      var regionId: String? = "",
+                      var regionsMap: Map<String, Map<String, String>> = mutableMapOf()) {
 }
