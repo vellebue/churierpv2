@@ -104,8 +104,10 @@ class Grid<T>(private val titleKey: String,
         val thisGrid = this
         grid.addItemDoubleClickListener { event ->
             val item = event.item
-            val targetEvent = GridEvent(item, thisGrid)
-            fireItemSelected(targetEvent)
+            if (item != null) {
+                val targetEvent = GridEvent(item, thisGrid)
+                fireItemSelected(targetEvent)
+            }
         }
         val gridContainer = VerticalLayout()
         gridContainer.addClassName("grid-container")
