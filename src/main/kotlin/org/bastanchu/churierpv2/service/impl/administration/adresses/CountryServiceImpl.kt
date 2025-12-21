@@ -16,12 +16,13 @@ open class CountryServiceImpl(@param:Autowired val countriesDao: CountriesDao,
 
     override fun retieveCountriesMap(): Map<String, String> {
         val countries = countriesDao.listAll()
-        val map = mutableMapOf<String, String>()
-        for (country in countries) {
+        val sortedCountries = countries.sortedBy { messages.getMessage(it.key!!, null,
+            LocaleContextHolder.getLocale()) }
+        val map = linkedMapOf<String, String>()
+        for (country in sortedCountries) {
             map[country.countryId!!] = "${country.countryId} - ${messages.getMessage(country.key!!, null,
                 LocaleContextHolder.getLocale())}"
         }
-        map[""] = ""
         return map
     }
 

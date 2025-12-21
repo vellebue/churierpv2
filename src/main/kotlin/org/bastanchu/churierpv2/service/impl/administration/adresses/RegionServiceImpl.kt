@@ -16,21 +16,17 @@ open class RegionServiceImpl(@param:Autowired val regionsDao: RegionsDao,
 
     override fun retrieveRegionsMap(): Map<String, Map<String, String>> {
         val regions = regionsDao.listAll()
+        val sortedRegions = regions.sortedBy { messages.getMessage(it.key!!, null, LocaleContextHolder.getLocale()) }
         val map = HashMap<String, Map<String, String>>()
-        for (region in regions) {
+        for (region in sortedRegions) {
             val regionMap = map[region.countryId] as HashMap<String, String>?
             if (regionMap != null) {
                 regionMap[region.regionId!!] = "${region.regionId} - ${messages.getMessage(region.key!!, null, LocaleContextHolder.getLocale())}"
             } else {
-                val regionMap = HashMap<String, String>()
+                val regionMap = linkedMapOf<String, String>()
                 map[region.countryId!!] = regionMap
                 regionMap[region.regionId!!] = "${region.regionId} - ${messages.getMessage(region.key!!, null, LocaleContextHolder.getLocale())}"
             }
-        }
-        // Populate empty region for each Country
-        map.keys.forEach {
-            val regionMap = map[it]!! as MutableMap<String, String>
-            regionMap[""] = ""
         }
         return map
     }
