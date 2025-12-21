@@ -32,16 +32,9 @@ class Form<T>(val titleKey : String, var formModel : T, val messages : MessageSo
             val currentComponent = modelMap?.get(it)?.component
             val currentField = formModelClass.declaredFields.filter { it.name ==  fieldName }[0]
             var currentValue: Any? = null
-            // TO DO Consider all component types
-            /*
-            if (currentComponent is TextField) {
-                currentValue = currentComponent.value
-            } else if (currentComponent is IntegerField) {
-                currentValue = currentComponent.value
-            }
-            */
+            // TODO Consider all component types
             currentValue = currentComponent?.value
-            // TO DO END
+            // TODO END
             currentField.trySetAccessible()
             currentField.set(formModelInstance, currentValue)
         }
