@@ -32,6 +32,7 @@ open class SocietiesServiceImpl(@field:Autowired val societiesDao : SocietiesDao
     }
 
     override fun createSociety(societyDto: SocietyDto) {
+        societyDto.societyId = null
         val society = societiesDao.fromValueObjectToEntity(societyDto)
         val address = societiesDao.buildNewAdressFromSocietyDto(societyDto)
         val addressType = addressDao.loadAddressType(AddressTypeEnum.SOCIETY_ADDRESS)

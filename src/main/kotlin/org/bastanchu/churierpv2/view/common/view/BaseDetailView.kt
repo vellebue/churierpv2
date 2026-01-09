@@ -55,10 +55,12 @@ abstract class BaseDetailView<L>(val messages: MessageSource,
         buttonBar.add(backButton)
         val createButton = GreenButton(getCreateButtonText())
         createButton.addClickListener {
-            // TODO Validate input
             val item = form.retrieveFormModel()
-            createItem(item)
-            parent.notifyCreateItemPerformed(item)
+            val valid = form.validate()
+            if (valid) {
+                createItem(item)
+                parent.notifyCreateItemPerformed(item)
+            }
         }
         buttonBar.add(createButton)
         return buttonBar
@@ -75,8 +77,11 @@ abstract class BaseDetailView<L>(val messages: MessageSource,
         val updateButton = BlueButton(getUpdateButtonText())
         updateButton.addClickListener {
             val item = form.retrieveFormModel()
-            updateItem(item)
-            parent.notifyUpdateItemPerformed(item)
+            val valid = form.validate()
+            if (valid) {
+                updateItem(item)
+                parent.notifyUpdateItemPerformed(item)
+            }
         }
         buttonBar.add(updateButton)
         val deleteButton = RedButton(getDeleteButtonText())
