@@ -10,6 +10,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import jakarta.validation.ConstraintViolation
 import jakarta.validation.Validation
 import jakarta.validation.Validator
+import org.bastanchu.churierpv2.dto.Valid
 import org.bastanchu.churierpv2.view.common.annotations.Field
 import org.bastanchu.churierpv2.view.common.annotations.FormField
 import org.bastanchu.churierpv2.view.common.formelements.ComboBoxFieldElementWrapper
@@ -65,7 +66,14 @@ class Form<T>(val titleKey : String, var formModel : T, val messages : MessageSo
 
     fun validate(): Boolean {
         val formModel = retrieveFormModel()
-        val validations = validator?.validate(formModel)
+        val validations = HashSet<ConstraintViolation<T>>()
+        val standardValidations = validator?.validate(formModel)
+        validations.addAll(standardValidations as Collection<ConstraintViolation<T>>)
+        if (formModel is Valid) {
+            val customValidations = HashSet<ConstraintViolation<*>>()
+            customValidations.addAll(formModel.validate())
+            validations.addAll(customValidations as Collection<ConstraintViolation<T>>)
+        }
         if (validations != null && validations.size > 0) {
             notifyValidationErrors(validations)
         }

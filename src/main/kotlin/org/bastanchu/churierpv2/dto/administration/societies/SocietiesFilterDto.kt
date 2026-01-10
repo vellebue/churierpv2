@@ -8,5 +8,6 @@ data class SocietiesFilterDto(@Field("societies.filter.name.key")
                               var name : String? = null,
                               @Field("societies.filter.socialName.key")
                               @FormField(groupId = 0, indexInGroup = 1)
-                              var socialName: String? = null) {
+                              var socialName: String? = null,
+                              var vatNumber: String? = null) {
 }
