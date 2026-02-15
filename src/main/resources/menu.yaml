@@ -16,3 +16,10 @@ menuList:
       - id: "invoices.receivingInvoices"
         textKey: "menu.invoices.receivingInvoices"
         viewClass: "org.bastanchu.churierpv2.view.invoices.receivinginvoices.ReceivingInvoicesView"
+
+  - id: "accountancy"
+    textKey: "menu.accountancy"
+    children:
+      - id: "accountancy.incomingInvoices"
+        textKey: "menu.accountancy.incomingInvoices"
+        viewClass: "org.bastanchu.churierpv2.view.administration.accountancy.icominginvoices.IncomingInvoicesView"

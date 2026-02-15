@@ -12,4 +12,6 @@ interface SocietiesService {
     fun updateSociety(societyDto: SocietyDto)
 
     fun deleteSociety(societyDto: SocietyDto)
+
+    fun retrieveSocietiesMap(): Map<String, String>
 }

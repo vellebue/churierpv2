@@ -63,4 +63,14 @@ open class SocietiesServiceImpl(@field:Autowired val societiesDao : SocietiesDao
     override fun deleteSociety(societyDto: SocietyDto) {
         societiesDao.deleteById(societyDto.societyId!!)
     }
+
+    override fun retrieveSocietiesMap(): Map<String, String> {
+        val societies = societiesDao.listAll()
+        val sortedSocieties = societies.sortedBy { it.name }
+        val map = linkedMapOf<String, String>()
+        for (society in sortedSocieties) {
+            map[society.societyId!!.toString()] = "${society.societyId} - ${society.name}"
+        }
+        return map
+    }
 }

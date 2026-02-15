@@ -13,13 +13,16 @@ import jakarta.validation.Validator
 import org.bastanchu.churierpv2.dto.Valid
 import org.bastanchu.churierpv2.view.common.annotations.Field
 import org.bastanchu.churierpv2.view.common.annotations.FormField
+import org.bastanchu.churierpv2.view.common.formelements.BigDecimalElementWrapper
 import org.bastanchu.churierpv2.view.common.formelements.ComboBoxFieldElementWrapper
+import org.bastanchu.churierpv2.view.common.formelements.DateFieldElementWrapper
 import org.bastanchu.churierpv2.view.common.formelements.FormComponentElementWrapper
 import org.bastanchu.churierpv2.view.common.formelements.IntegerFieldElementWrapper
 import org.bastanchu.churierpv2.view.common.formelements.SurrogateComboBoxFieldElementWrapper
 import org.bastanchu.churierpv2.view.common.formelements.TextFieldElementWrapper
 import org.springframework.context.MessageSource
 import org.springframework.context.i18n.LocaleContextHolder
+import java.math.BigDecimal
 import java.util.stream.Collectors
 
 class Form<T>(val titleKey : String, var formModel : T, val messages : MessageSource) : VerticalLayout() {
@@ -167,6 +170,18 @@ class Form<T>(val titleKey : String, var formModel : T, val messages : MessageSo
                                     fieldValue as Int?,
                                     messages
                                 ) //as AbstractField<*,in Any?>?
+                            } else if (field.type.isAssignableFrom(java.math.BigDecimal::class.java)) {
+                                componentElementWrapper =
+                                    BigDecimalElementWrapper(fieldAnnotation,
+                                        fieldValue as BigDecimal?,
+                                        messages)
+                            }
+                            else if (field.type.isAssignableFrom(java.util.Date::class.java)) {
+                                componentElementWrapper = DateFieldElementWrapper(
+                                    fieldAnnotation,
+                                    fieldValue as java.util.Date?,
+                                    messages
+                                )
                             }
                             // TODO end more type cases
                             if (componentElementWrapper != null) {

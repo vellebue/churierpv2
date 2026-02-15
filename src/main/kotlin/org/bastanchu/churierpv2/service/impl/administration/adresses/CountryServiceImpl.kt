@@ -8,6 +8,7 @@ import org.springframework.context.i18n.LocaleContextHolder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
+import java.text.Collator
 
 @Service
 @Transactional(value = "transactionManager", propagation = Propagation.REQUIRED)
@@ -16,8 +17,11 @@ open class CountryServiceImpl(@param:Autowired val countriesDao: CountriesDao,
 
     override fun retieveCountriesMap(): Map<String, String> {
         val countries = countriesDao.listAll()
-        val sortedCountries = countries.sortedBy { messages.getMessage(it.key!!, null,
-            LocaleContextHolder.getLocale()) }
+        val sorter = Collator.getInstance(LocaleContextHolder.getLocale())
+        val sortedCountries = countries.sortedWith { country, country1 ->
+            sorter.compare(messages.getMessage(country.key, null, LocaleContextHolder.getLocale()),
+                           messages.getMessage(country1.key, null, LocaleContextHolder.getLocale()))
+        }
         val map = linkedMapOf<String, String>()
         for (country in sortedCountries) {
             map[country.countryId!!] = "${country.countryId} - ${messages.getMessage(country.key!!, null,
