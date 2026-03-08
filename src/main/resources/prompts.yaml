@@ -1,0 +1,45 @@
+promptList:
+  - id: "receivingInvoicePrompt"
+    description: "This is a propmpt for receiving invoices"
+    model: "qwen2.5vl:7b"
+    #model: "qwen3.5:9b"
+    #model: "qwen3-vl:8b"
+    systemPrompt: "You are a specialized OCR assistant. Extract data from invoice images and return ONLY valid JSON that conforms to the provided schema. Do not include markdown formatting or explanations."
+    userPrompt: | 
+            Extract the details from this invoice. Required fields: companyName, vatNumber (include only letters and numbers and exclude other characters), address, postalCode, city, 
+            invoiceDate as yyyy-mm-dd format, invoiceNumber 
+            and a list of 'lines' with the following fields containing articleName, numUnits as number, basePrice as number, vatTax as number, vatPercentage as number, and totalPrice as number.
+    jsonResponseSchema: {
+      "name": "invoice_extraction",
+      "strict": true,
+      "schema": {
+        "type": "object",
+        "properties": {
+          "companyName": { "type": "string", description: "The name of the company that issues this invoice." },
+          "vatNumber": { "type": "string", description: "The VAT number of the company that issues this invoice." },
+          "address": { "type": "string", description: "The address of the company that issues this invoice."},
+          "postalCode": { "type": "string", description: "The postal code of the company"},
+          "city": { "type": "string", description: "The city of the company"},
+          "invoiceDate": { "type": "string", description: "The date on which the invoice was issued."},
+          "invoiceNumber": { "type": "string", description: "The number of the invoice or invoice id for the issuer."},
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "articleName": { "type": "string", description: "The name of the article being purchased." },
+                "numUnits": { "type": "number", description: "The number of units purchased." },
+                "basePrice": { "type": "number", description: "The base price of the article." },
+                "vatTax": { "type": "number", description: "The VAT tax applied to the article." },
+                "vatPercentage": {type: "number", description: "The percentage of the VAT tax applied to the article"},
+                "totalPrice": { "type": "number", description: "The total price of the article, including VAT." }
+              },
+              "required": ["articleName", "numUnits", "basePrice", "vatTax", "vatPercentage", "totalPrice"]
+            }
+          }
+        },
+        "required": ["companyName", "vatNumber", "address", "postalCode", "city", "invoiceDate", "invoiceNumber", "lines"]
+      }
+    }
+    temperature: 0.0
+

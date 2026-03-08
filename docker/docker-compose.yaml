@@ -51,9 +51,33 @@ services:
       - churierpv2-keycloak-db
     networks:
       - churierpv2-net
+# OLLAMA ENGINE
+  churierpv2-ollama:
+    image: ollama/ollama:0.17.7
+    #use nvidia-smi -L to list available GPUs and id numbers
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: [ '0']
+              capabilities: [ gpu ]
+    #environment:
+    #  CUDA_VISIBLE_DEVICES: "GPU-22371b8b-7854-5181-7084-f92ad0ec80c6"
+    #user: angel
+    volumes:
+      - churierpv2-ollama-volume:/root/.ollama
+    ports:
+      - 11435:11434
+    expose:
+      - "11434"
+    #command: "ollama run llama3.2-vision"
+    networks:
+      - churierpv2-net
 volumes:
   churierpv2-db-volume:
   churierpv2-keycloak-db-volume:
+  churierpv2-ollama-volume:
 networks:
   churierpv2-net:
     driver: bridge
